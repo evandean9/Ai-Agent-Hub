@@ -1,0 +1,894 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Hub — 3rd Brain</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #12121a;
+    --border: #1e1e2e;
+    --accent: #7c3aed;
+    --accent2: #06b6d4;
+    --text: #e2e8f0;
+    --muted: #64748b;
+    --success: #10b981;
+    --danger: #ef4444;
+    --card: #0f0f1a;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Syne', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Grid background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: 
+      linear-gradient(rgba(124,58,237,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(124,58,237,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .glow {
+    position: fixed;
+    width: 600px;
+    height: 600px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(124,58,237,0.08) 0%, transparent 70%);
+    top: -200px;
+    right: -200px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .glow2 {
+    position: fixed;
+    width: 400px;
+    height: 400px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(6,182,212,0.06) 0%, transparent 70%);
+    bottom: -100px;
+    left: -100px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 24px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Header */
+  header {
+    padding: 32px 0 24px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 40px;
+  }
+
+  .header-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .logo-icon {
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+  }
+
+  .logo h1 {
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+  }
+
+  .logo span {
+    color: var(--accent2);
+  }
+
+  .status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--success);
+    box-shadow: 0 0 8px var(--success);
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  /* Tabs */
+  .tabs {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 32px;
+    background: var(--surface);
+    padding: 4px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    width: fit-content;
+  }
+
+  .tab {
+    padding: 10px 24px;
+    border-radius: 8px;
+    border: none;
+    background: transparent;
+    color: var(--muted);
+    font-family: 'Syne', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.5px;
+  }
+
+  .tab.active {
+    background: var(--accent);
+    color: white;
+  }
+
+  .tab:hover:not(.active) {
+    color: var(--text);
+  }
+
+  /* Panels */
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  /* Dump panel */
+  .dump-area {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 24px;
+  }
+
+  .dump-area h2 {
+    font-size: 18px;
+    font-weight: 800;
+    margin-bottom: 6px;
+  }
+
+  .dump-area p {
+    font-size: 13px;
+    color: var(--muted);
+    margin-bottom: 20px;
+    font-family: 'Space Mono', monospace;
+  }
+
+  textarea {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+    color: var(--text);
+    font-family: 'Space Mono', monospace;
+    font-size: 13px;
+    resize: vertical;
+    min-height: 140px;
+    transition: border-color 0.2s;
+    outline: none;
+  }
+
+  textarea:focus {
+    border-color: var(--accent);
+  }
+
+  .btn {
+    padding: 12px 28px;
+    border-radius: 10px;
+    border: none;
+    font-family: 'Syne', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.5px;
+  }
+
+  .btn-primary {
+    background: linear-gradient(135deg, var(--accent), #6d28d9);
+    color: white;
+    margin-top: 12px;
+  }
+
+  .btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 20px rgba(124,58,237,0.3);
+  }
+
+  .btn-primary:disabled {
+    opacity: 0.5;
+    transform: none;
+  }
+
+  .btn-danger {
+    background: transparent;
+    color: var(--danger);
+    border: 1px solid rgba(239,68,68,0.3);
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+
+  .btn-danger:hover {
+    background: rgba(239,68,68,0.1);
+  }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 20px;
+    font-size: 13px;
+    font-family: 'Space Mono', monospace;
+    z-index: 100;
+    transform: translateY(100px);
+    opacity: 0;
+    transition: all 0.3s;
+  }
+
+  .toast.show {
+    transform: translateY(0);
+    opacity: 1;
+  }
+
+  .toast.success { border-color: var(--success); color: var(--success); }
+  .toast.error { border-color: var(--danger); color: var(--danger); }
+
+  /* Memory cards */
+  .memories-grid {
+    display: grid;
+    gap: 16px;
+  }
+
+  .memory-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+    transition: border-color 0.2s;
+    animation: fadeIn 0.3s ease;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .memory-card:hover {
+    border-color: var(--accent);
+  }
+
+  .memory-left { flex: 1; }
+
+  .memory-title {
+    font-size: 15px;
+    font-weight: 700;
+    margin-bottom: 6px;
+  }
+
+  .memory-summary {
+    font-size: 13px;
+    color: var(--muted);
+    font-family: 'Space Mono', monospace;
+    line-height: 1.5;
+    margin-bottom: 12px;
+  }
+
+  .memory-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .tag {
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-family: 'Space Mono', monospace;
+    font-weight: 700;
+  }
+
+  .tag-category {
+    background: rgba(124,58,237,0.15);
+    color: var(--accent);
+    border: 1px solid rgba(124,58,237,0.3);
+  }
+
+  .tag-regular {
+    background: rgba(6,182,212,0.1);
+    color: var(--accent2);
+    border: 1px solid rgba(6,182,212,0.2);
+  }
+
+  /* Filter bar */
+  .filter-bar {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+  }
+
+  .filter-btn {
+    padding: 7px 16px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--muted);
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .filter-btn.active, .filter-btn:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  /* Chat panel */
+  .chat-container {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+    height: 520px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .chat-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 700;
+    font-size: 14px;
+  }
+
+  .chat-header .icon {
+    font-size: 18px;
+  }
+
+  .chat-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .chat-messages::-webkit-scrollbar { width: 4px; }
+  .chat-messages::-webkit-scrollbar-track { background: transparent; }
+  .chat-messages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  .message {
+    max-width: 80%;
+    animation: fadeIn 0.2s ease;
+  }
+
+  .message.user { align-self: flex-end; }
+  .message.ai { align-self: flex-start; }
+
+  .message-bubble {
+    padding: 12px 16px;
+    border-radius: 12px;
+    font-size: 14px;
+    line-height: 1.6;
+    font-family: 'Space Mono', monospace;
+  }
+
+  .user .message-bubble {
+    background: var(--accent);
+    color: white;
+    border-bottom-right-radius: 4px;
+  }
+
+  .ai .message-bubble {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-bottom-left-radius: 4px;
+  }
+
+  .message-meta {
+    font-size: 10px;
+    color: var(--muted);
+    margin-top: 4px;
+    font-family: 'Space Mono', monospace;
+  }
+
+  .user .message-meta { text-align: right; }
+
+  .chat-input-area {
+    padding: 16px 20px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    gap: 10px;
+  }
+
+  .chat-input {
+    flex: 1;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 16px;
+    color: var(--text);
+    font-family: 'Space Mono', monospace;
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .chat-input:focus { border-color: var(--accent); }
+
+  .send-btn {
+    background: var(--accent);
+    border: none;
+    border-radius: 10px;
+    width: 44px;
+    height: 44px;
+    cursor: pointer;
+    font-size: 18px;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .send-btn:hover {
+    background: #6d28d9;
+    transform: scale(1.05);
+  }
+
+  .typing {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+    padding: 12px 16px;
+  }
+
+  .typing span {
+    width: 6px;
+    height: 6px;
+    background: var(--muted);
+    border-radius: 50%;
+    animation: bounce 1.2s infinite;
+  }
+
+  .typing span:nth-child(2) { animation-delay: 0.2s; }
+  .typing span:nth-child(3) { animation-delay: 0.4s; }
+
+  @keyframes bounce {
+    0%, 60%, 100% { transform: translateY(0); }
+    30% { transform: translateY(-8px); }
+  }
+
+  /* Empty state */
+  .empty {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--muted);
+  }
+
+  .empty .big { font-size: 40px; margin-bottom: 12px; }
+  .empty p { font-family: 'Space Mono', monospace; font-size: 13px; }
+
+  /* Stats bar */
+  .stats-bar {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 32px;
+  }
+
+  .stat-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+    text-align: center;
+  }
+
+  .stat-number {
+    font-size: 28px;
+    font-weight: 800;
+    color: var(--accent2);
+  }
+
+  .stat-label {
+    font-size: 11px;
+    color: var(--muted);
+    font-family: 'Space Mono', monospace;
+    margin-top: 4px;
+  }
+
+  /* Config panel */
+  .config-area {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 28px;
+  }
+
+  .config-area h2 { font-size: 18px; font-weight: 800; margin-bottom: 20px; }
+
+  .config-field { margin-bottom: 16px; }
+  .config-field label {
+    display: block;
+    font-size: 12px;
+    font-family: 'Space Mono', monospace;
+    color: var(--muted);
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .config-field input {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 14px;
+    color: var(--text);
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .config-field input:focus { border-color: var(--accent); }
+</style>
+</head>
+<body>
+<div class="glow"></div>
+<div class="glow2"></div>
+
+<div class="container">
+  <header>
+    <div class="header-inner">
+      <div class="logo">
+        <div class="logo-icon">🧠</div>
+        <h1>AI<span>Hub</span></h1>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div class="status-dot" id="statusDot"></div>
+        <span style="font-size:12px;font-family:'Space Mono',monospace;color:var(--muted)" id="statusText">connecting...</span>
+      </div>
+    </div>
+  </header>
+
+  <div class="stats-bar">
+    <div class="stat-card">
+      <div class="stat-number" id="statTotal">—</div>
+      <div class="stat-label">Total Memories</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-number" id="statIdeas">—</div>
+      <div class="stat-label">Ideas</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-number" id="statTasks">—</div>
+      <div class="stat-label">Tasks</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-number" id="statNotes">—</div>
+      <div class="stat-label">Notes</div>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('dump')">⚡ Dump</button>
+    <button class="tab" onclick="switchTab('brain')">🧠 3rd Brain</button>
+    <button class="tab" onclick="switchTab('chat')">💬 Chat</button>
+    <button class="tab" onclick="switchTab('config')">⚙️ Config</button>
+  </div>
+
+  <!-- DUMP PANEL -->
+  <div id="panel-dump" class="panel active">
+    <div class="dump-area">
+      <h2>⚡ Dump Anything</h2>
+      <p>// paste ideas, links, notes, tasks — AI auto-sorts it</p>
+      <textarea id="dumpText" placeholder="Dump anything here...&#10;&#10;- an idea you had&#10;- a link to save&#10;- a task to remember&#10;- research notes&#10;- literally anything"></textarea>
+      <br>
+      <button class="btn btn-primary" onclick="dumpInfo()" id="dumpBtn">⚡ SEND TO BRAIN</button>
+    </div>
+  </div>
+
+  <!-- BRAIN PANEL -->
+  <div id="panel-brain" class="panel">
+    <div class="filter-bar">
+      <button class="filter-btn active" onclick="filterMemories('all', this)">All</button>
+      <button class="filter-btn" onclick="filterMemories('idea', this)">💡 Ideas</button>
+      <button class="filter-btn" onclick="filterMemories('task', this)">✅ Tasks</button>
+      <button class="filter-btn" onclick="filterMemories('note', this)">📝 Notes</button>
+      <button class="filter-btn" onclick="filterMemories('research', this)">🔬 Research</button>
+      <button class="filter-btn" onclick="filterMemories('link', this)">🔗 Links</button>
+      <button class="filter-btn" onclick="filterMemories('memory', this)">💭 Memories</button>
+    </div>
+    <div class="memories-grid" id="memoriesGrid">
+      <div class="empty">
+        <div class="big">🧠</div>
+        <p>your 3rd brain is empty<br>go dump something first</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- CHAT PANEL -->
+  <div id="panel-chat" class="panel">
+    <div class="chat-container">
+      <div class="chat-header">
+        <span class="icon">🤖</span>
+        Chat with your 3rd Brain
+      </div>
+      <div class="chat-messages" id="chatMessages">
+        <div class="message ai">
+          <div class="message-bubble">Hey! Ask me anything — I'll search your stored memories and answer based on what you've saved.</div>
+          <div class="message-meta">AI Brain</div>
+        </div>
+      </div>
+      <div class="chat-input-area">
+        <input class="chat-input" id="chatInput" placeholder="Ask your brain anything..." onkeydown="if(event.key==='Enter')sendChat()">
+        <button class="send-btn" onclick="sendChat()">→</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- CONFIG PANEL -->
+  <div id="panel-config" class="panel">
+    <div class="config-area">
+      <h2>⚙️ Configuration</h2>
+      <div class="config-field">
+        <label>Backend URL (your Render URL)</label>
+        <input type="text" id="backendUrl" placeholder="https://ai-hub-backend.onrender.com" oninput="saveConfig()">
+      </div>
+      <p style="font-size:12px;color:var(--muted);font-family:'Space Mono',monospace;margin-top:16px;">
+        Enter your Render backend URL after deploying. Everything else is handled server-side.
+      </p>
+      <button class="btn btn-primary" style="margin-top:20px;" onclick="testConnection()">Test Connection</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  // Config
+  let BACKEND_URL = localStorage.getItem('backendUrl') || '';
+  
+  document.addEventListener('DOMContentLoaded', () => {
+    const saved = localStorage.getItem('backendUrl');
+    if (saved) document.getElementById('backendUrl').value = saved;
+    checkStatus();
+    loadMemories();
+  });
+
+  function saveConfig() {
+    BACKEND_URL = document.getElementById('backendUrl').value.trim().replace(/\/$/, '');
+    localStorage.setItem('backendUrl', BACKEND_URL);
+  }
+
+  function switchTab(name) {
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.getElementById('panel-' + name).classList.add('active');
+    event.target.classList.add('active');
+    if (name === 'brain') loadMemories();
+  }
+
+  async function checkStatus() {
+    if (!BACKEND_URL) {
+      setStatus(false, 'no backend url set');
+      return;
+    }
+    try {
+      const r = await fetch(BACKEND_URL + '/');
+      if (r.ok) setStatus(true, 'connected');
+      else setStatus(false, 'backend error');
+    } catch {
+      setStatus(false, 'backend offline');
+    }
+  }
+
+  function setStatus(ok, text) {
+    const dot = document.getElementById('statusDot');
+    dot.style.background = ok ? 'var(--success)' : 'var(--danger)';
+    dot.style.boxShadow = ok ? '0 0 8px var(--success)' : '0 0 8px var(--danger)';
+    document.getElementById('statusText').textContent = text;
+  }
+
+  function toast(msg, type = 'success') {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = 'toast ' + type + ' show';
+    setTimeout(() => t.classList.remove('show'), 3000);
+  }
+
+  async function dumpInfo() {
+    const content = document.getElementById('dumpText').value.trim();
+    if (!content) return toast('Write something first!', 'error');
+    if (!BACKEND_URL) return toast('Set backend URL in Config first', 'error');
+
+    const btn = document.getElementById('dumpBtn');
+    btn.disabled = true;
+    btn.textContent = '⏳ Processing...';
+
+    try {
+      const r = await fetch(BACKEND_URL + '/dump', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content, source: 'web' })
+      });
+      const data = await r.json();
+      toast(`✅ Saved as "${data.meta.category}": ${data.meta.title}`);
+      document.getElementById('dumpText').value = '';
+      loadStats();
+    } catch (e) {
+      toast('Failed to save: ' + e.message, 'error');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = '⚡ SEND TO BRAIN';
+    }
+  }
+
+  let allMemories = [];
+
+  async function loadMemories() {
+    if (!BACKEND_URL) return;
+    try {
+      const r = await fetch(BACKEND_URL + '/memories?limit=100');
+      allMemories = await r.json();
+      renderMemories(allMemories);
+      updateStats(allMemories);
+    } catch {}
+  }
+
+  function updateStats(memories) {
+    document.getElementById('statTotal').textContent = memories.length;
+    document.getElementById('statIdeas').textContent = memories.filter(m => m.category === 'idea').length;
+    document.getElementById('statTasks').textContent = memories.filter(m => m.category === 'task').length;
+    document.getElementById('statNotes').textContent = memories.filter(m => m.category === 'note').length;
+  }
+
+  function loadStats() {
+    loadMemories();
+  }
+
+  function filterMemories(cat, btn) {
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const filtered = cat === 'all' ? allMemories : allMemories.filter(m => m.category === cat);
+    renderMemories(filtered);
+  }
+
+  function renderMemories(memories) {
+    const grid = document.getElementById('memoriesGrid');
+    if (!memories.length) {
+      grid.innerHTML = '<div class="empty"><div class="big">🧠</div><p>nothing here yet<br>go dump something</p></div>';
+      return;
+    }
+    grid.innerHTML = memories.map(m => `
+      <div class="memory-card" id="mem-${m.id}">
+        <div class="memory-left">
+          <div class="memory-title">${m.title || 'Untitled'}</div>
+          <div class="memory-summary">${m.summary || m.content?.substring(0, 120) || ''}</div>
+          <div class="memory-tags">
+            <span class="tag tag-category">${m.category}</span>
+            ${(m.tags || []).map(t => `<span class="tag tag-regular">${t}</span>`).join('')}
+          </div>
+        </div>
+        <button class="btn btn-danger" onclick="deleteMemory(${m.id})">✕</button>
+      </div>
+    `).join('');
+  }
+
+  async function deleteMemory(id) {
+    if (!confirm('Delete this memory?')) return;
+    try {
+      await fetch(BACKEND_URL + '/memories/' + id, { method: 'DELETE' });
+      document.getElementById('mem-' + id)?.remove();
+      allMemories = allMemories.filter(m => m.id !== id);
+      updateStats(allMemories);
+      toast('Memory deleted');
+    } catch {
+      toast('Delete failed', 'error');
+    }
+  }
+
+  async function sendChat() {
+    const input = document.getElementById('chatInput');
+    const msg = input.value.trim();
+    if (!msg) return;
+    if (!BACKEND_URL) return toast('Set backend URL in Config first', 'error');
+
+    input.value = '';
+    addMessage(msg, 'user');
+
+    // Typing indicator
+    const typingId = 'typing-' + Date.now();
+    const msgs = document.getElementById('chatMessages');
+    const typingDiv = document.createElement('div');
+    typingDiv.className = 'message ai';
+    typingDiv.id = typingId;
+    typingDiv.innerHTML = '<div class="message-bubble"><div class="typing"><span></span><span></span><span></span></div></div>';
+    msgs.appendChild(typingDiv);
+    msgs.scrollTop = msgs.scrollHeight;
+
+    try {
+      const r = await fetch(BACKEND_URL + '/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: msg })
+      });
+      const data = await r.json();
+      document.getElementById(typingId)?.remove();
+      addMessage(data.answer, 'ai', `AI Brain · ${data.sources_used} memories searched`);
+    } catch (e) {
+      document.getElementById(typingId)?.remove();
+      addMessage('Error: ' + e.message, 'ai');
+    }
+  }
+
+  function addMessage(text, role, meta = '') {
+    const msgs = document.getElementById('chatMessages');
+    const div = document.createElement('div');
+    div.className = 'message ' + role;
+    div.innerHTML = `
+      <div class="message-bubble">${text}</div>
+      ${meta ? `<div class="message-meta">${meta}</div>` : ''}
+    `;
+    msgs.appendChild(div);
+    msgs.scrollTop = msgs.scrollHeight;
+  }
+
+  async function testConnection() {
+    saveConfig();
+    await checkStatus();
+    toast('Connection tested — check status indicator');
+  }
+</script>
+</body>
+</html>
